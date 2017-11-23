@@ -4,6 +4,7 @@ import io.jansyk13.echo.HttpAggregatingEcho;
 import io.jansyk13.echo.HttpEcho;
 import io.jansyk13.echo.TcpEcho;
 import io.jansyk13.pingpong.TcpPingPong;
+import io.jansyk13.proxy.TcpProxy;
 
 public class Example {
 
@@ -13,6 +14,8 @@ public class Example {
         HttpEcho.run();
 
         TcpPingPong.run();
+
+        TcpProxy.run();
 
 //        Server server = null;
 //        try {
