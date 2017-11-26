@@ -2,6 +2,7 @@ group 'io.jansyk13'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'groovy'
 
 sourceCompatibility = 1.8
 
@@ -9,11 +10,26 @@ repositories {
     mavenCentral()
 }
 
+
 dependencies {
     compile group: 'ch.qos.logback', name: 'logback-core', version: '1.2.3'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
 
     compile group: 'io.netty', name: 'netty-all', version: '4.1.17.Final'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    compile group: 'io.projectreactor', name: 'reactor-core', version: '3.1.2.RELEASE'
+    compile group: 'io.projectreactor', name: 'reactor-stream', version: '2.0.8.RELEASE'
+    compile group: 'org.reactivestreams', name: 'reactive-streams', version: '1.0.1'
+
+    testCompile "org.codehaus.groovy:groovy-all:2.4.10"
+    testCompile "org.spockframework:spock-core:1.1-groovy-2.4"
+
+    testCompile group: 'net.jadler', name: 'jadler-core', version: '1.3.0'
+    testCompile group: 'net.jadler', name: 'jadler-jdk', version: '1.3.0'
+
+    testCompile "org.hamcrest:hamcrest-core:1.3" // only necessary if Hamcrest matchers are used
+    testRuntime "net.bytebuddy:byte-buddy:1.6.5"          // allows mocking of classes (in addition to interfaces)
+    testRuntime "org.objenesis:objenesis:2.5.1"
+    // allows mocking of classes without default constructor (together with CGLIB)
 }

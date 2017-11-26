@@ -1,6 +1,5 @@
 package io.jansyk13.pingpong;
 
-import io.jansyk13.Server;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -19,13 +18,20 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.DefaultThreadFactory;
 
-public class TcpPingPongServer implements Server {
+import java.io.Closeable;
+import java.io.IOException;
+
+public class SocketPingPongServer implements Closeable {
 
     private final ServerBootstrap bootstrap;
     private final EventLoopGroup eventLoopGroup;
     private final ChannelFuture channelFuture;
 
-    public TcpPingPongServer() throws InterruptedException {
+    public SocketPingPongServer() {
+        this(7777);
+    }
+
+    public SocketPingPongServer(int port) {
         this.eventLoopGroup = new EpollEventLoopGroup(4, new DefaultThreadFactory("netty-server-tcp-pingpong"));
         this.bootstrap = new ServerBootstrap()
                 .group(eventLoopGroup)
@@ -51,11 +57,21 @@ public class TcpPingPongServer implements Server {
                     }
                 });
 
-        this.channelFuture = this.bootstrap.bind(7777).sync();
+        try {
+            this.channelFuture = this.bootstrap.bind(port).sync();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void close() throws InterruptedException {
-        this.channelFuture.channel().close().sync();
+    @Override
+    public void close() throws IOException {
+        try {
+            this.channelFuture.channel().close().sync();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         this.eventLoopGroup.shutdownGracefully();
+
     }
 }

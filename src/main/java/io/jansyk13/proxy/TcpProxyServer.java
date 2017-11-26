@@ -1,6 +1,5 @@
 package io.jansyk13.proxy;
 
-import io.jansyk13.Server;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -23,7 +22,10 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TcpProxyServer implements Server {
+import java.io.Closeable;
+import java.io.IOException;
+
+public class TcpProxyServer implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(TcpProxyServer.class);
 
     private static final AttributeKey<Channel> downstreamChannelKey = AttributeKey.valueOf(Channel.class, "downstreamChannel");
@@ -101,8 +103,13 @@ public class TcpProxyServer implements Server {
         return clientBootstrap.connect("localhost", 7777).sync().channel();
     }
 
-    public void close() throws InterruptedException {
-        this.channelFuture.channel().close().sync();
+    @Override
+    public void close() throws IOException {
+        try {
+            this.channelFuture.channel().close().sync();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         this.eventLoopGroup.shutdownGracefully();
     }
 }

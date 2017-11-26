@@ -1,6 +1,6 @@
 package io.jansyk13.proxy;
 
-import io.jansyk13.echo.TcpEchoServer;
+import io.jansyk13.echo.SocketEchoServer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -23,7 +23,7 @@ public class TcpProxy {
     private static final Logger logger = LoggerFactory.getLogger(TcpProxy.class);
 
     public static void run() throws Exception{
-        TcpEchoServer tcpEchoServer = new TcpEchoServer();
+        SocketEchoServer socketEchoServer = new SocketEchoServer();
         TcpProxyServer tcpProxyServer = new TcpProxyServer();
 
         EpollEventLoopGroup eventLoopGroup = new EpollEventLoopGroup(4, new DefaultThreadFactory("netty-client-tcp-proxy"));
@@ -73,7 +73,7 @@ public class TcpProxy {
         channelFuture.channel().closeFuture().sync();
         eventLoopGroup.shutdownGracefully();
 
-        tcpEchoServer.close();
+        socketEchoServer.close();
         tcpProxyServer.close();
     }
 }

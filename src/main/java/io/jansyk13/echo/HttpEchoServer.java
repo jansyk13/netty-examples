@@ -1,6 +1,5 @@
 package io.jansyk13.echo;
 
-import io.jansyk13.Server;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,12 +24,19 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 
-public class HttpEchoServer implements Server {
+import java.io.Closeable;
+import java.io.IOException;
+
+public class HttpEchoServer implements Closeable {
     private final ServerBootstrap bootstrap;
     private final EventLoopGroup eventLoopGroup;
     private final ChannelFuture channelFuture;
 
-    public HttpEchoServer() throws InterruptedException {
+    public HttpEchoServer() {
+        this(7777);
+    }
+
+    public HttpEchoServer(int port) {
         this.eventLoopGroup = new EpollEventLoopGroup(4, new DefaultThreadFactory("netty-server-http-echo"));
         this.bootstrap = new ServerBootstrap()
                 .group(eventLoopGroup)
@@ -77,11 +83,20 @@ public class HttpEchoServer implements Server {
                     }
                 });
 
-        this.channelFuture = this.bootstrap.bind(7777).sync();
+        try {
+            this.channelFuture = this.bootstrap.bind(port).sync();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void close() throws InterruptedException {
-        this.channelFuture.channel().close().sync();
+    @Override
+    public void close() throws IOException {
+        try {
+            this.channelFuture.channel().close().sync();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         this.eventLoopGroup.shutdownGracefully();
     }
 }
