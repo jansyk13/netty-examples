@@ -1,10 +1,8 @@
 package io.jansyk13.client.handler;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.concurrent.Promise;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -19,9 +17,9 @@ public class RequestContentPublishingHandler extends SimpleChannelInboundHandler
     AtomicInteger done = new AtomicInteger(0);
 
     private final Publisher<HttpContent> publisher;
-    private final Promise<HttpResponse> promise;
+    private final Promise<?> promise;
 
-    public RequestContentPublishingHandler(Channel channel, Publisher<HttpContent> publisher, Promise<HttpResponse> promise) {
+    public RequestContentPublishingHandler(Publisher<HttpContent> publisher, Promise<?> promise) {
         this.publisher = publisher;
         this.promise = promise;
     }
@@ -51,6 +49,7 @@ public class RequestContentPublishingHandler extends SimpleChannelInboundHandler
                 done.getAndAccumulate(1, (old, neww) -> {
                     if (old == 0) {
                         subscription.get().cancel();
+                        ctx.fireExceptionCaught(t);
                         promise.setFailure(t);
                         return neww;
                     }

@@ -17,6 +17,7 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
 
     compile group: 'io.netty', name: 'netty-all', version: '4.1.17.Final'
+    compile group: 'io.vavr', name: 'vavr', version: '0.9.2'
 
     compile group: 'io.projectreactor', name: 'reactor-core', version: '3.1.2.RELEASE'
     compile group: 'io.projectreactor', name: 'reactor-stream', version: '2.0.8.RELEASE'
