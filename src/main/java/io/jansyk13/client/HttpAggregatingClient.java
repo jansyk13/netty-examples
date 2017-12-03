@@ -14,6 +14,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.DefaultPromise;
@@ -63,8 +64,12 @@ public class HttpAggregatingClient implements Closeable {
         channel.pipeline().addLast(new SimpleChannelInboundHandler<FullHttpResponse>() {
             @Override
             protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
-                promise.setSuccess(msg.copy());
-                ctx.pipeline().remove(this);
+                if (msg.status().code() < 200) {
+                    // skip 1xx codes
+                } else {
+                    promise.setSuccess(msg.copy());
+                    ctx.pipeline().remove(this);
+                }
             }
 
             @Override

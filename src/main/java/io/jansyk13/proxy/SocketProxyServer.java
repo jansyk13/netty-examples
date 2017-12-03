@@ -25,17 +25,21 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 
-public class TcpProxyServer implements Closeable {
-    private static final Logger logger = LoggerFactory.getLogger(TcpProxyServer.class);
+public class SocketProxyServer implements Closeable {
+    private static final Logger logger = LoggerFactory.getLogger(SocketProxyServer.class);
 
     private static final AttributeKey<Channel> downstreamChannelKey = AttributeKey.valueOf(Channel.class, "downstreamChannel");
 
     private final ServerBootstrap bootstrap;
     private final EventLoopGroup eventLoopGroup;
     private final ChannelFuture channelFuture;
+    private final int proxyPort;
+    private final int downstreamPort;
 
-    public TcpProxyServer() throws InterruptedException {
-        this.eventLoopGroup = new EpollEventLoopGroup(4, new DefaultThreadFactory("netty-server-tcp-proxy"));
+    public SocketProxyServer(int proxyPort, int downstreamPort) throws InterruptedException {
+        this.proxyPort = proxyPort;
+        this.downstreamPort = downstreamPort;
+        this.eventLoopGroup = new EpollEventLoopGroup(4, new DefaultThreadFactory("netty-server-socket-proxy"));
         this.bootstrap = new ServerBootstrap()
                 .group(eventLoopGroup)
                 .channel(EpollServerSocketChannel.class)
@@ -72,7 +76,7 @@ public class TcpProxyServer implements Closeable {
                     }
                 });
 
-        this.channelFuture = this.bootstrap.bind(8888).sync();
+        this.channelFuture = this.bootstrap.bind(this.proxyPort).sync();
     }
 
     private Channel createDownstreamChannel(Channel upstreamChannel) throws InterruptedException {
@@ -100,7 +104,7 @@ public class TcpProxyServer implements Closeable {
                     }
                 });
 
-        return clientBootstrap.connect("localhost", 7777).sync().channel();
+        return clientBootstrap.connect("localhost", this.downstreamPort).sync().channel();
     }
 
     @Override

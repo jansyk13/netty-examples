@@ -18,14 +18,46 @@ public class RequestContentPublishingHandler extends SimpleChannelInboundHandler
 
     private final Publisher<HttpContent> publisher;
     private final Promise<?> promise;
+    private final boolean expectContinue;
 
-    public RequestContentPublishingHandler(Publisher<HttpContent> publisher, Promise<?> promise) {
+    public RequestContentPublishingHandler(Publisher<HttpContent> publisher, Promise<?> promise, boolean expectContinue) {
         this.publisher = publisher;
         this.promise = promise;
+        this.expectContinue = expectContinue;
     }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        if (!expectContinue) {
+            publishContent(ctx);
+        }
+        super.handlerAdded(ctx);
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (!promise.isDone()) {
+            promise.setFailure(new RuntimeException("Unexpected channel read in RequestContentPublishingHandler"));
+        }
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        // remove and propagate
+        cancelIfNotDone();
+        ctx.pipeline().remove(this);
+        super.channelInactive(ctx);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        // remove and propagate
+        cancelIfNotDone();
+        ctx.pipeline().remove(this);
+        super.exceptionCaught(ctx, cause);
+    }
+
+    private void publishContent(ChannelHandlerContext ctx) {
         this.publisher.subscribe(new Subscriber<HttpContent>() {
             //TODO replace with field updater
 
@@ -64,30 +96,6 @@ public class RequestContentPublishingHandler extends SimpleChannelInboundHandler
                 cancelIfNotDone();
             }
         });
-        super.handlerAdded(ctx);
-    }
-
-    @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (!promise.isDone()) {
-            promise.setFailure(new RuntimeException("Unexpected channel read in RequestContentPublishingHandler"));
-        }
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        // remove and propagate
-        cancelIfNotDone();
-        ctx.pipeline().remove(this);
-        super.channelInactive(ctx);
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        // remove and propagate
-        cancelIfNotDone();
-        ctx.pipeline().remove(this);
-        super.exceptionCaught(ctx, cause);
     }
 
     private void cancelIfNotDone() {

@@ -12,6 +12,7 @@ import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.logging.LogLevel;
@@ -65,8 +66,10 @@ public class HttpClient implements Closeable {
         channel.writeAndFlush(request)
                 .addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
 
+        boolean expectContinue = request.headers().get(HttpHeaderNames.EXPECT) != null;
+
         // subscribe on request content publisher - sends http content
-        channel.pipeline().addLast(new RequestContentPublishingHandler(publisher, promise));
+        channel.pipeline().addLast(new RequestContentPublishingHandler(publisher, promise, expectContinue));
 
         // handle inbound http data
         channel.pipeline().addLast(new ResponseHandler(promise));
